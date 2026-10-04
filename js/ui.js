@@ -47,6 +47,9 @@
   /* ---------- 页：摇卦 ---------- */
   function showCast() {
     S.page = 'cast'; S.casting = false; S.lines = null;
+    // 已授权过则自动开启摇一摇
+    var autoShake = false;
+    try { autoShake = localStorage.getItem('yijing_shake_on') === '1'; } catch (_) {}
     $('app').innerHTML =
       '<div class="scroll-wrap"><div class="book">' +
       '<button class="back" onclick="YijingUI.goHome()">‹ 返回</button>' +
@@ -55,10 +58,11 @@
       '<p class="hint">三钱摇六次，自下而上<br>○ 老阳为动 · × 老阴为动</p>' +
       '<div id="castArea" class="cast-area"></div>' +
       '<button id="castBtn" class="btn-bronze" onclick="YijingUI.startCast()">摇 卦</button>' +
-      '<button id="shakeBtn" class="btn-ghost" onclick="YijingUI.enableShake()">开启摇一摇</button>' +
-      '<p id="shakeHint" class="hint" style="display:none">摇动手机即可起卦</p>' +
+      '<button id="shakeBtn" class="btn-ghost" onclick="YijingUI.enableShake()" style="' + (autoShake ? 'display:none' : '') + '">开启摇一摇</button>' +
+      '<p id="shakeHint" class="hint" style="' + (autoShake ? '' : 'display:none') + '">摇动手机即可起卦</p>' +
       '</div></div>' +
       lampHTML();
+    if (autoShake) window.YijingUI.enableShake(true);
   }
 
   /* ---------- 页：结果 ---------- */
@@ -161,7 +165,27 @@
   /* ---------- 摇一摇感应 ---------- */
   var shakeOn = false, lastA = null, lastT = 0, shakeCount = 0;
   function onMotion(e) {
-    if (!shakeOn || S.casting || S.page !== 'cast') return;
+    if (!shakeOn || S.casting) return;
+    if (S.page === 'result') { // 结果页摇一摇 → 自动再摇
+      var a0 = e.accelerationIncludingGravity;
+      if (!a0) return;
+      var now0 = Date.now();
+      if (now0 - lastT < 120) return;
+      lastT = now0;
+      if (lastA) {
+        var dx = a0.x - lastA.x, dy = a0.y - lastA.y, dz = a0.z - lastA.z;
+        if (Math.sqrt(dx*dx + dy*dy + dz*dz) > 22) {
+          lastA = null; shakeCount = 0;
+          playRattle();
+          window.YijingUI.goCast();
+          setTimeout(function(){ window.YijingUI.startCast(); }, 350);
+          return;
+        }
+      }
+      lastA = { x: a0.x, y: a0.y, z: a0.z };
+      return;
+    }
+    if (S.page !== 'cast') return;
     var a = e.accelerationIncludingGravity;
     if (!a) return;
     var now = Date.now();
@@ -187,12 +211,26 @@
     goHome: showHome,
     goCast: function () { S.result = null; S.expanded = null; showCast(); },
     toggle: function (w) { S.expanded = (S.expanded === w) ? null : w; showResult(); },
-    enableShake: function () {
+    enableShake: function (silent) {
       function on() {
         shakeOn = true;
+        try { localStorage.setItem('yijing_shake_on', '1'); } catch (_) {}
         var b = $('shakeBtn'); if (b) b.style.display = 'none';
         var h = $('shakeHint'); if (h) h.style.display = '';
         try { window.addEventListener('devicemotion', onMotion); } catch (_) {}
+      }
+      if (silent) {
+        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+          DeviceMotionEvent.requestPermission().then(function (r) {
+            if (r === 'granted') on();
+            else showBtn();
+          }).catch(showBtn);
+        } else { on(); }
+        return;
+      }
+      function showBtn() {
+        var b = $('shakeBtn'); if (b) b.style.display = '';
+        var h = $('shakeHint'); if (h) h.style.display = 'none';
       }
       // iOS 13+ 需用户手势授权
       if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
