@@ -1,18 +1,728 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>周易六爻</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>观音</title>
+  <meta name="theme-color" content="#000000">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="观音">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; background: #000; overflow: hidden;
+      display: flex; justify-content: center; align-items: center;
+    }
+    #stars {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 0;
+    }
+    .container {
+      position: relative; width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center; z-index: 1;
+      transition: opacity 0.35s ease, transform 0.45s cubic-bezier(.4, 0, .2, 1);
+    }
+    .container.orient-fade {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+
+    /* ========== 竖屏 ========== */
+    .guanyin-wrapper {
+      position: relative;
+      top: 6px; /* 观音像整体下移 6px（不影响 float 动画的 transform） */
+      width: min(83vw, 414px);
+      animation: float 6s ease-in-out infinite;
+      z-index: 5;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .guanyin-wrapper img {
+      width: 100%; height: auto; display: block;
+      user-select: none; -webkit-user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none; -webkit-touch-callout: none;
+    }
+    .guanyin-protect {
+      position: absolute; inset: 0; z-index: 6;
+      background: transparent;
+      user-select: none; -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    .sparkle-link {
+      position: absolute; top: 6%; right: 14%; z-index: 12;
+      font-size: clamp(18px, 5.2vw, 28px); line-height: 1;
+      cursor: pointer; user-select: none; -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      filter: drop-shadow(0 0 6px rgba(255, 240, 200, 0.85));
+      animation: sparklePulse 2.4s ease-in-out infinite;
+      pointer-events: auto; background: none; border: none; padding: 4px;
+    }
+    .sparkle-link:hover {
+      filter: drop-shadow(0 0 10px rgba(255, 255, 220, 1));
+      transform: scale(1.12);
+    }
+    .sparkle-link:active { transform: scale(0.95); }
+
+    @keyframes sparklePulse {
+      0%, 100% { opacity: 0.85; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.08); }
+    }
+
+    /* 竖屏星空入口图标 */
+    .sky-icon {
+      position: fixed; z-index: 15;
+      font-size: clamp(22px, 6.5vw, 34px); line-height: 1;
+      cursor: pointer; user-select: none; -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      background: none; border: none; padding: 6px;
+      filter: drop-shadow(0 0 6px rgba(255, 240, 200, 0.85));
+      animation: sparklePulse 2.4s ease-in-out infinite, skyIconFadeIn 0.35s ease-out;
+      pointer-events: auto; will-change: transform, opacity;
+    }
+    .sky-icon:active { transform: scale(0.9); }
+
+    .sky-sparkle {
+      position: absolute; font-size: 0.4em; line-height: 1;
+      pointer-events: none; opacity: 0; color: #fff8e0;
+      text-shadow: 0 0 4px rgba(255,255,255,0.95), 0 0 8px rgba(255,214,140,0.65);
+      animation: sparkleTwinkle 1.6s ease-in-out infinite;
+    }
+    @keyframes sparkleTwinkle {
+      0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+      50% { opacity: 1; transform: scale(1.2) rotate(20deg); }
+    }
+
+    .sky-icon-hide {
+      animation: meteorFly 0.6s cubic-bezier(.3,.7,.4,1) forwards !important;
+      pointer-events: none;
+    }
+    .sky-icon-hide .sky-sparkle {
+      animation: none !important; opacity: 0; transition: opacity 0.15s ease;
+    }
+    .sky-icon-hide::after {
+      content: ''; position: absolute; top: 50%; left: 50%;
+      width: 42px; height: 2px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.95), rgba(255,255,255,0));
+      border-radius: 2px; transform-origin: 0% 50%;
+      transform: translateY(-50%) rotate(var(--mrot, 0deg));
+      opacity: 0; animation: meteorTail 0.6s ease-out forwards;
+    }
+    @keyframes meteorFly {
+      0% { transform: translate(0, 0) scale(1); opacity: 1; }
+      100% { transform: translate(var(--mx, -120px), var(--my, 90px)) scale(0.2); opacity: 0; }
+    }
+    @keyframes meteorTail {
+      0% { opacity: 0; }
+      25% { opacity: 0.9; }
+      100% { opacity: 0; }
+    }
+    @keyframes skyIconFadeIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media (orientation: landscape) {
+      .sky-icon { display: none !important; }
+    }
+
+    .throne-area {
+      position: relative;
+      width: min(92vw, 480px);
+      height: min(48vw, 250px);
+      margin-top: -40px;
+      display: flex; justify-content: center; align-items: flex-end;
+      z-index: 2;
+    }
+    .mandala-arc {
+      position: absolute; left: 50%; bottom: 0;
+      width: 100%; height: 100%;
+      transform: translateX(-50%);
+      pointer-events: none; z-index: 1;
+    }
+    .mandala {
+      position: absolute; bottom: 0;
+      background-image: url("mandala.webp");
+      background-size: contain; background-repeat: no-repeat; background-position: center;
+      opacity: 0.88;
+      filter: drop-shadow(0 0 4px rgba(255, 210, 120, 0.45))
+              drop-shadow(0 0 12px rgba(255, 190, 80, 0.25))
+              drop-shadow(0 0 22px rgba(255, 170, 50, 0.12));
+      animation: mandalaSpin 24s linear infinite;
+    }
+    .m1 { left: 0%;   width: 30%; height: 30%; bottom: -4%; z-index: 8; animation-duration: 29s; animation-direction: reverse; }
+    .m2 { left: 11%;  width: 22%; height: 22%; bottom: 12%; z-index: 6; animation-duration: 22s; }
+    .m3 { left: 23%;  width: 16%; height: 16%; bottom: 24%; z-index: 4; animation-duration: 32s; animation-direction: reverse; }
+    .m4 { left: 33%;  width: 12%; height: 12%; bottom: 33%; z-index: 2; animation-duration: 19s; }
+    .m5 { right: 33%; width: 12%; height: 12%; bottom: 33%; z-index: 2; animation-duration: 21s; animation-direction: reverse; }
+    .m6 { right: 23%; width: 16%; height: 16%; bottom: 24%; z-index: 4; animation-duration: 30s; }
+    .m7 { right: 11%; width: 22%; height: 22%; bottom: 12%; z-index: 6; animation-duration: 23s; animation-direction: reverse; }
+    .m8 { right: 0%;  width: 30%; height: 30%; bottom: -4%; z-index: 8; animation-duration: 26s; }
+    .m9 {
+      left: 50%; width: 20%; height: 20%; bottom: 6%; z-index: 5;
+      animation: mandalaSpinCenter 36s linear infinite; opacity: 0.75;
+    }
+
+    .lotus-wrapper {
+      position: relative; width: min(48vw, 220px); z-index: 10;
+      animation: throneFloat 7s ease-in-out infinite;
+    }
+    .lotus-wrapper > img {
+      width: 100%; height: auto; display: block;
+      pointer-events: none; position: relative; z-index: 2;
+    }
+    .hotspot {
+      position: absolute; border-radius: 50%; cursor: pointer; z-index: 12;
+      transition: transform 0.15s ease;
+    }
+    .hot-piano   { width: 32%; height: 32%; top: 4%; left: 4%; }
+    .hot-zjiao   { width: 32%; height: 32%; top: 4%; right: 4%; }
+    .hot-mahjong { width: 32%; height: 32%; bottom: 6%; left: 4%; }
+    .hot-slot    { width: 32%; height: 32%; bottom: 6%; right: 4%; }
+    .hot-lotus   { width: 42%; height: 48%; top: 26%; left: 29%; }
+    .hotspot:active { transform: scale(0.93); }
+
+    /* 横屏田字格：竖屏隐藏 */
+    .landscape-grid { display: none; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+    @keyframes throneFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+    @keyframes mandalaSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes mandalaSpinCenter {
+      from { transform: translateX(-50%) rotate(0deg); }
+      to { transform: translateX(-50%) rotate(360deg); }
+    }
+
+    /* ========== 横屏 ========== */
+    @media (orientation: landscape) {
+      .container {
+        --pad-x: 1.5vw;
+        --gap-x: 1.4vw;
+        --grid-gap: 0.5vh;
+        --avail-w: calc(100vw - 2 * var(--pad-x) - 2 * var(--gap-x));
+        --g-w: min(calc(var(--avail-w) * 0.48), 48vh, 380px);
+        --side-w: calc((var(--avail-w) - var(--g-w)) / 2);
+        /* 右侧 3 行：高度按 /3 分配；上限 78px（原 110 的约 70%） */
+        --cell: min(var(--side-w), calc((100vh - 2 * var(--grid-gap) - 2vh) / 3), 78px);
+
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: 0;
+        padding: 0 var(--pad-x);
+        height: 100%;
+        max-height: 100vh;
+        overflow: hidden;
+      }
+
+      .throne-area { display: none !important; }
+
+      .guanyin-wrapper {
+        top: 0; /* 横屏不下移 */
+        width: var(--g-w);
+        max-height: 92vh;
+        order: 2;
+        margin: 0 var(--gap-x);
+        flex-shrink: 0;
+      }
+      .guanyin-wrapper img {
+        max-height: 92vh; width: 100%; height: auto; object-fit: contain;
+      }
+      .sparkle-link {
+        top: 5%; right: 12%;
+        font-size: clamp(16px, 3.2vh, 26px);
+      }
+
+      .landscape-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: var(--grid-gap);
+        width: calc(var(--cell) * 2 + var(--grid-gap));
+        height: calc(var(--cell) * 2 + var(--grid-gap));
+        flex-shrink: 0;
+        max-height: 96vh;
+      }
+      .landscape-grid.left {
+        order: 1;
+        grid-template-rows: 1fr 1fr 1fr;
+        height: calc(var(--cell) * 3 + 2 * var(--grid-gap));
+      }
+      .landscape-grid.right {
+        order: 3;
+        grid-template-rows: 1fr 1fr 1fr;
+        height: calc(var(--cell) * 3 + 2 * var(--grid-gap));
+      }
+
+      .grid-cell {
+        width: var(--cell);
+        height: var(--cell);
+        border: 1px solid rgba(218, 175, 80, 0.55);
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: border-color 0.25s, box-shadow 0.25s, transform 0.12s, background 0.25s;
+        user-select: none; -webkit-user-select: none;
+        -webkit-touch-callout: none;
+        font-size: clamp(20px, calc(var(--cell) * 0.40), 34px);
+        line-height: 1;
+        filter: drop-shadow(0 0 4px rgba(255, 230, 160, 0.35));
+      }
+      .grid-cell:hover {
+        border-color: rgba(255, 210, 120, 0.85);
+        background: rgba(255, 200, 100, 0.06);
+        box-shadow: 0 0 14px rgba(255, 200, 100, 0.15);
+      }
+      .grid-cell:active { transform: scale(0.92); }
+    }
+
+    @media (orientation: landscape) and (max-height: 420px) {
+      .container {
+        --g-w: min(calc(var(--avail-w) * 0.42), 70vh, 280px);
+        --cell: min(var(--side-w), calc((100vh - 2 * var(--grid-gap) - 1vh) / 3), 58px);
+        --gap-x: 1.2vw;
+        --grid-gap: 0.4vh;
+      }
+    }
+  </style>
 </head>
 <body>
-<div id="app"></div>
-<script src="js/data-1.js"></script>
-<script src="js/data-2.js"></script>
-<script src="js/data-3.js"></script>
-<script src="js/data-4.js"></script>
-<script src="js/core.js"></script>
-<script src="js/ui.js"></script>
+  <canvas id="stars"></canvas>
+
+  <div class="container" id="main-container">
+    <!-- 横屏左侧田字格：🎰 🔮 🎲 🎹 🐢 🥁 -->
+    <div class="landscape-grid left">
+      <button type="button" class="grid-cell" title="老虎机" aria-label="老虎机"
+              data-app="slot">🎰</button>
+      <button type="button" class="grid-cell" title="掷茭" aria-label="掷茭"
+              data-app="zjiao">🔮</button>
+      <button type="button" class="grid-cell" title="麻将" aria-label="麻将"
+              data-app="mahjong">🎲</button>
+      <button type="button" class="grid-cell" title="钢琴" aria-label="钢琴"
+              data-app="piano">🎹</button>
+      <button type="button" class="grid-cell" title="大鱼缸" aria-label="大鱼缸"
+              data-app="fishtank">🐢</button>
+      <button type="button" class="grid-cell" title="打击乐合成器" aria-label="打击乐合成器"
+              data-app="perc">🥁</button>
+    </div>
+
+    <!-- 观音 -->
+    <div class="guanyin-wrapper">
+      <img src="guanyin.webp" alt="观音">
+      <div class="guanyin-protect" aria-hidden="true"></div>
+      <button type="button" id="music-toggle" class="sparkle-link"
+              title="播放音乐" aria-label="播放音乐">✨</button>
+    </div>
+
+    <!-- 横屏右侧田字格：📻 📖 🎙️ 📽️ 🀄️ 🏷️ -->
+    <div class="landscape-grid right">
+      <button type="button" class="grid-cell" title="广播电台" aria-label="广播电台"
+              data-app="radio">📻</button>
+      <button type="button" class="grid-cell" title="PDF 电子书阅读器" aria-label="PDF 电子书阅读器"
+              data-app="pdf">📖</button>
+      <button type="button" class="grid-cell" title="录音/播客" aria-label="录音/播客"
+              data-app="audio">🎙️</button>
+      <button type="button" class="grid-cell" title="视频播放器" aria-label="视频播放器"
+              data-app="video">📽️</button>
+      <button type="button" class="grid-cell" title="麻将 Pro" aria-label="麻将 Pro"
+              data-app="mjpro">🀄️</button>
+      <button type="button" class="grid-cell" title="超市特价" aria-label="超市特价"
+              data-app="prices">🏷️</button>
+    </div>
+
+    <!-- 竖屏宝座（横屏隐藏） -->
+    <div class="throne-area">
+      <div class="mandala-arc">
+        <div class="mandala m1"></div>
+        <div class="mandala m2"></div>
+        <div class="mandala m3"></div>
+        <div class="mandala m4"></div>
+        <div class="mandala m5"></div>
+        <div class="mandala m6"></div>
+        <div class="mandala m7"></div>
+        <div class="mandala m8"></div>
+        <div class="mandala m9"></div>
+      </div>
+      <div class="lotus-wrapper">
+        <img src="lotus.webp" alt="莲花菜单">
+        <div class="hotspot hot-piano"   title="钢琴"   data-app="piano"></div>
+        <div class="hotspot hot-zjiao"   title="掷茭"   data-app="zjiao"></div>
+        <div class="hotspot hot-mahjong" title="麻将"   data-app="mahjong"></div>
+        <div class="hotspot hot-slot"    title="老虎机" data-app="slot"></div>
+        <div class="hotspot hot-lotus"   title="呼出播放器/阅读器" id="lotus-center"></div>
+      </div>
+    </div>
+  </div>
+
+  <audio id="bgm" src="Heart Sutra.mp3" loop preload="auto"></audio>
+  <audio id="audioUnlock" preload="auto" style="display:none" src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="></audio>
+
+  <script>
+    /* ========== iOS静音开关解锁 ========== */
+    // AudioContext合成音效会被iOS物理静音开关屏蔽，原生<audio>标签走不同的音频会话通道不受影响；
+    // 首次用户手势时播放一次无声<audio>可以把会话切到"播放"类别，之后Web Audio的点击音效也能绕开静音开关。
+    // 注意：即使有#bgm这个真实<audio>，也不能保证一定生效——用户可能从没点开背景音乐，
+    // 所以点击音效仍需要自己这份独立的解锁保底。
+    let audioUnlocked = false;
+    function unlockAudioSession() {
+      if (audioUnlocked) return;
+      audioUnlocked = true;
+      const el = document.getElementById('audioUnlock');
+      if (el) el.play().catch(function () {});
+    }
+
+    /* ========== 点击音效（Web Audio，无外部文件） ========== */
+    let audioCtx = null;
+    function playClick() {
+      unlockAudioSession();
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const t = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, t);
+        osc.frequency.exponentialRampToValueAtTime(440, t + 0.08);
+        gain.gain.setValueAtTime(0.12, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.12);
+      } catch (_) {}
+    }
+
+    /* ========== 统一外链（一处维护，热点 / 田字格 / 星空图标共用） ========== */
+    const LINKS = {
+      piano:  'https://totp99.github.io/Piano/',
+      zjiao:  'https://totp99.github.io/Zhi-Jiao/',
+      mahjong:'https://totp99.github.io/Mahjong/',
+      slot:   'https://totp99.github.io/Slots-machine/',
+      pdf:    'https://totp99.github.io/PDF-book-reader/',
+      audio:  'https://totp99.github.io/Mp3-player/',
+      video:  'https://totp99.github.io/Mp4-player/',
+      radio:  'https://totp99.github.io/Radio/',
+      fishtank: 'https://totp99.github.io/fish-tank/',
+      perc:   'https://totp99.github.io/perc-synth/',
+      mjpro:  'https://totp99.github.io/mj-pro/',
+      prices: 'https://totp99.github.io/Best-prices/',
+      yi:     'https://totp99.github.io/Yi/'
+    };
+
+    function openLink(url) {
+      playClick();
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+
+    /* ========== 绑定 data-app 点击 ========== */
+    document.querySelectorAll('[data-app]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        const url = LINKS[el.getAttribute('data-app')];
+        if (url) openLink(url);
+      });
+    });
+
+    /* ========== 背景音乐 ✨ ========== */
+    const audio = document.getElementById('bgm');
+    const musicToggleBtn = document.getElementById('music-toggle');
+    musicToggleBtn.addEventListener('click', function () {
+      playClick();
+      if (audio.paused) {
+        audio.play().catch(function () {});
+      } else {
+        audio.pause();
+      }
+    });
+    audio.addEventListener('play', function () {
+      musicToggleBtn.title = '暂停音乐';
+      musicToggleBtn.setAttribute('aria-label', '暂停音乐');
+    });
+    audio.addEventListener('pause', function () {
+      musicToggleBtn.title = '播放音乐';
+      musicToggleBtn.setAttribute('aria-label', '播放音乐');
+    });
+
+    /* ========== 莲花中心：呼出/收回星空图标 ========== */
+    const SKY_ICONS = [
+      { emoji: '📻', app: 'radio',   label: '广播电台' },
+      { emoji: '📖', app: 'pdf',     label: 'PDF 电子书阅读器' },
+      { emoji: '🎙️', app: 'audio',   label: '录音/播客' },
+      { emoji: '📽️', app: 'video',   label: '视频播放器' },
+      { emoji: '🐢', app: 'fishtank', label: '大鱼缸' },
+      { emoji: '🥁', app: 'perc',    label: '打击乐合成器' },
+      { emoji: '🀄️', app: 'mjpro',   label: '麻将 Pro' },
+      { emoji: '🏷️', app: 'prices',  label: '超市特价' },
+      { emoji: '☸️', app: 'yi',      label: '易' }
+    ];
+    let skyIconsVisible = false;
+
+    function addSparkles(btn) {
+      const count = 4 + Math.floor(Math.random() * 2);
+      for (let i = 0; i < count; i++) {
+        const s = document.createElement('span');
+        s.className = 'sky-sparkle';
+        s.textContent = '✨';
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 14 + Math.random() * 16;
+        s.style.left = 'calc(50% + ' + (Math.cos(angle) * radius) + 'px)';
+        s.style.top = 'calc(50% + ' + (Math.sin(angle) * radius) + 'px)';
+        s.style.animationDelay = (Math.random() * 1.6).toFixed(2) + 's';
+        s.style.animationDuration = (1.2 + Math.random() * 1.2).toFixed(2) + 's';
+        btn.appendChild(s);
+      }
+    }
+
+    function spawnSkyIcons() {
+      playClick();
+      if (skyIconsVisible) {
+        hideSkyIcons();
+        return;
+      }
+      document.querySelectorAll('.sky-icon').forEach(function (el) { el.remove(); });
+
+      const zones = [
+        { xMin: 2,  xMax: 12 },
+        { xMin: 12, xMax: 22 },
+        { xMin: 22, xMax: 32 },
+        { xMin: 32, xMax: 42 },
+        { xMin: 42, xMax: 52 },
+        { xMin: 52, xMax: 62 },
+        { xMin: 62, xMax: 72 },
+        { xMin: 72, xMax: 82 },
+        { xMin: 82, xMax: 92 }
+      ];
+      for (let i = zones.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = zones[i]; zones[i] = zones[j]; zones[j] = tmp;
+      }
+
+      SKY_ICONS.forEach(function (icon, i) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'sky-icon';
+        btn.textContent = icon.emoji;
+        btn.title = icon.label;
+        btn.setAttribute('aria-label', icon.label);
+        const zone = zones[i];
+        btn.style.left = (zone.xMin + Math.random() * (zone.xMax - zone.xMin)) + '%';
+        btn.style.top = (2 + Math.random() * 14) + '%';
+
+        const flyAngle = Math.random() * Math.PI * 2;
+        const flyDist = 90 + Math.random() * 70;
+        const mx = Math.cos(flyAngle) * flyDist;
+        const my = Math.sin(flyAngle) * flyDist;
+        btn.style.setProperty('--mx', mx.toFixed(1) + 'px');
+        btn.style.setProperty('--my', my.toFixed(1) + 'px');
+        btn.style.setProperty('--mrot', ((Math.atan2(my, mx) * 180 / Math.PI) + 180).toFixed(1) + 'deg');
+
+        addSparkles(btn);
+        btn.addEventListener('click', function () { openLink(LINKS[icon.app]); });
+        document.body.appendChild(btn);
+      });
+      skyIconsVisible = true;
+    }
+
+    function hideSkyIcons() {
+      const els = document.querySelectorAll('.sky-icon');
+      els.forEach(function (el) { el.classList.add('sky-icon-hide'); });
+      setTimeout(function () {
+        els.forEach(function (el) { el.remove(); });
+      }, 620);
+      skyIconsVisible = false;
+    }
+
+    document.getElementById('lotus-center').addEventListener('click', spawnSkyIcons);
+
+    /* ========== 横竖屏切换动画 ========== */
+    (function orientAnim() {
+      const container = document.getElementById('main-container');
+      let lastOrient = window.matchMedia('(orientation: landscape)').matches ? 'landscape' : 'portrait';
+      let timer = null;
+
+      function onOrientChange() {
+        const now = window.matchMedia('(orientation: landscape)').matches ? 'landscape' : 'portrait';
+        if (now === lastOrient) return;
+        lastOrient = now;
+        container.classList.add('orient-fade');
+        clearTimeout(timer);
+        timer = setTimeout(function () {
+          container.classList.remove('orient-fade');
+          if (skyIconsVisible) hideSkyIcons();
+        }, 280);
+      }
+
+      window.addEventListener('orientationchange', onOrientChange, { passive: true });
+      window.matchMedia('(orientation: landscape)').addEventListener('change', onOrientChange);
+    })();
+
+    /* ========== 观音图保护 ========== */
+    (function protectGuanyin() {
+      document.addEventListener('contextmenu', function (e) {
+        if (e.target.closest('.guanyin-wrapper') || e.target.tagName === 'IMG') {
+          e.preventDefault();
+        }
+      }, true);
+      document.addEventListener('dragstart', function (e) {
+        if (e.target.tagName === 'IMG' || e.target.closest('.guanyin-wrapper')) {
+          e.preventDefault();
+        }
+      }, true);
+      document.addEventListener('keydown', function (e) {
+        const key = (e.key || '').toLowerCase();
+        const ctrl = e.ctrlKey || e.metaKey;
+        if (ctrl && ['s', 'c', 'u', 'p', 'a'].includes(key)) {
+          if (!/^(INPUT|TEXTAREA)$/i.test(e.target.tagName) && !e.target.isContentEditable) {
+            e.preventDefault();
+          }
+        }
+        if (e.key === 'F12' || (ctrl && e.shiftKey && ['i', 'j', 'c'].includes(key))) {
+          e.preventDefault();
+        }
+      }, true);
+      document.querySelectorAll('.guanyin-wrapper img').forEach(function (img) {
+        img.setAttribute('draggable', 'false');
+        img.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+      });
+    })();
+
+    /* ========== 星空背景 ========== */
+    const canvas = document.getElementById('stars');
+    const ctx = canvas.getContext('2d');
+    let stars = [], meteors = [], w, h;
+    const colors = ['255,255,255','200,220,255','180,200,255','255,240,220','255,230,180','220,200,255','180,240,255','255,210,210'];
+
+    function resize() {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+      createStars();
+    }
+    function createStars() {
+      const count = Math.floor((w * h) / 1800);
+      stars = [];
+      for (let i = 0; i < count; i++) {
+        const size = Math.random();
+        let radius, baseAlpha, twinkleSpeed;
+        if (size < 0.7) {
+          radius = Math.random() * 1.1 + 0.3;
+          baseAlpha = Math.random() * 0.45 + 0.25;
+          twinkleSpeed = Math.random() * 0.025 + 0.008;
+        } else if (size < 0.92) {
+          radius = Math.random() * 1.4 + 1;
+          baseAlpha = Math.random() * 0.4 + 0.4;
+          twinkleSpeed = Math.random() * 0.02 + 0.01;
+        } else {
+          radius = Math.random() * 1.8 + 1.8;
+          baseAlpha = Math.random() * 0.3 + 0.55;
+          twinkleSpeed = Math.random() * 0.015 + 0.012;
+        }
+        stars.push({
+          x: Math.random() * w, y: Math.random() * h, radius,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          baseAlpha, twinkleSpeed, phase: Math.random() * Math.PI * 2,
+          deepTwinkle: Math.random() < 0.45, hasSpike: Math.random() < 0.07
+        });
+      }
+    }
+    function createMeteor() {
+      const zone = Math.random() < 0.55 ? 0 : 1;
+      let x, y, angle, speed;
+      if (zone === 0) {
+        x = Math.random() * w * 0.85; y = -30 - Math.random() * 40;
+        angle = Math.PI / 5 + (Math.random() - 0.5) * 0.4;
+        speed = Math.random() * 5 + 7;
+      } else {
+        x = -40 + Math.random() * (w * 0.3); y = h * 0.78 + Math.random() * (h * 0.2);
+        angle = Math.PI / 6 + (Math.random() - 0.3) * 0.35;
+        speed = Math.random() * 5 + 6.5;
+      }
+      meteors.push({
+        x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+        len: Math.random() * 70 + 50, alpha: 1, life: 1,
+        decay: Math.random() * 0.009 + 0.007,
+        color: Math.random() > 0.7 ? '255,230,180' : '220,235,255', zone
+      });
+    }
+    function drawStars() {
+      ctx.clearRect(0, 0, w, h);
+      for (const s of stars) {
+        s.phase += s.twinkleSpeed;
+        const twinkle = s.deepTwinkle
+          ? Math.pow(0.5 + 0.5 * Math.sin(s.phase), 2.2)
+          : Math.max(0.05, 0.35 + 0.65 * Math.sin(s.phase));
+        const alpha = s.baseAlpha * twinkle;
+        if (alpha < 0.03) continue;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(' + s.color + ',' + alpha + ')';
+        ctx.fill();
+        if (s.radius > 1.6 && alpha > 0.3) {
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.radius * 2, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(' + s.color + ',' + (alpha * 0.12) + ')';
+          ctx.fill();
+        }
+        if (s.hasSpike && alpha > 0.55) {
+          const len = s.radius * 3.2;
+          ctx.strokeStyle = 'rgba(' + s.color + ',' + (alpha * 0.3) + ')';
+          ctx.lineWidth = 0.55;
+          ctx.beginPath();
+          ctx.moveTo(s.x - len, s.y); ctx.lineTo(s.x + len, s.y);
+          ctx.moveTo(s.x, s.y - len); ctx.lineTo(s.x, s.y + len);
+          ctx.stroke();
+        }
+      }
+      for (let i = meteors.length - 1; i >= 0; i--) {
+        const m = meteors[i];
+        m.x += m.vx; m.y += m.vy; m.life -= m.decay; m.alpha = Math.max(0, m.life);
+        if (m.zone === 0 && m.y > h * 0.18 + 30) m.life -= 0.04;
+        if (m.zone === 1 && m.y < h * 0.78 - 20) m.life -= 0.04;
+        if (m.life <= 0 || m.x > w + 120 || m.y > h + 80 || m.y < -80) {
+          meteors.splice(i, 1); continue;
+        }
+        const tx = m.x - m.vx * (m.len / 12), ty = m.y - m.vy * (m.len / 12);
+        const g = ctx.createLinearGradient(m.x, m.y, tx, ty);
+        g.addColorStop(0, 'rgba(' + m.color + ',' + m.alpha + ')');
+        g.addColorStop(0.3, 'rgba(' + m.color + ',' + (m.alpha * 0.45) + ')');
+        g.addColorStop(1, 'rgba(' + m.color + ',0)');
+        ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(tx, ty);
+        ctx.strokeStyle = g; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.stroke();
+        ctx.beginPath(); ctx.arc(m.x, m.y, 1.6, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,' + m.alpha + ')'; ctx.fill();
+      }
+      if (Math.random() < 0.004) createMeteor();
+      requestAnimationFrame(drawStars);
+    }
+
+    window.addEventListener('resize', resize, { passive: true });
+    window.addEventListener('orientationchange', resize, { passive: true });
+    resize();
+    drawStars();
+  </script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
+</script>
 </body>
 </html>
