@@ -106,6 +106,9 @@ body{
   box-shadow:0 4px 14px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.15)}
 .btn-bronze:disabled{opacity:.5}
 .btn-bronze:active{transform:scale(.97)}
+.btn-ghost{display:block;margin:14px auto 0;padding:10px 30px;font-size:14px;letter-spacing:4px;
+  font-family:inherit;cursor:pointer;color:var(--gold);background:transparent;
+  border:1px dashed rgba(138,109,59,.5);border-radius:6px}
 .back{background:none;border:none;font-size:15px;color:var(--gold);cursor:pointer;
   font-family:inherit;margin-bottom:6px;letter-spacing:2px}
 
@@ -139,6 +142,19 @@ body{
   25%{transform:translateX(-52%) scale(.94,1.1) rotate(2deg)}
   50%{transform:translateX(-48%) scale(1.06,.92) rotate(-2.5deg)}
   75%{transform:translateX(-51%) scale(.96,1.06) rotate(1deg)}}
+/* 偶发窜高：7秒一次 */
+.lamp-flame{animation:flick 1.6s ease-in-out infinite, flare 7s ease-in-out infinite}
+@keyframes flare{
+  0%,88%,100%{filter:brightness(1)}
+  91%{filter:brightness(1.35)}
+  93%{filter:brightness(1.5)}
+  95%{filter:brightness(1.2)}}
+.lamp-flame i{animation:flareH 7s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes flareH{
+  0%,88%,100%{transform:translateX(-50%) scaleY(1)}
+  92%{transform:translateX(-50%) scaleY(1.45)}
+  94%{transform:translateX(-50%) scaleY(1.6)}
+  96%{transform:translateX(-50%) scaleY(1.1)}}
 .lamp-body{position:absolute;left:50%;bottom:26px;width:34px;height:20px;transform:translateX(-50%);
   background:linear-gradient(180deg,#3d3226,#241c12);border-radius:46% 46% 40% 40%/90% 90% 30% 30%;
   box-shadow:inset 0 3px 5px rgba(255,180,80,.25)}
@@ -150,3 +166,17 @@ body{
 .lamp-base::after{content:"";position:absolute;left:50%;bottom:0;width:52px;height:10px;
   transform:translateX(-50%);background:radial-gradient(ellipse,#54432c,#2e2417);
   border-radius:50%}
+
+/* ── 淡淡烟气 ── */
+.lamp-smoke{position:absolute;left:50%;top:-34px;width:20px;height:44px;
+  transform:translateX(-50%);pointer-events:none}
+.lamp-smoke i{position:absolute;bottom:0;left:50%;width:7px;height:7px;border-radius:50%;
+  background:radial-gradient(circle,rgba(200,190,175,.32),transparent 70%);
+  filter:blur(1.5px);opacity:0;animation:smoke 5s ease-out infinite}
+.lamp-smoke i:nth-child(1){animation-delay:0s}
+.lamp-smoke i:nth-child(2){animation-delay:1.7s}
+.lamp-smoke i:nth-child(3){animation-delay:3.4s}
+@keyframes smoke{
+  0%{transform:translate(-50%,0) scale(.6);opacity:0}
+  18%{opacity:.75}
+  100%{transform:translate(-42%,-42px) scale(2.1);opacity:0}}
