@@ -55,6 +55,8 @@
       '<p class="hint">三钱摇六次，自下而上<br>○ 老阳为动 · × 老阴为动</p>' +
       '<div id="castArea" class="cast-area"></div>' +
       '<button id="castBtn" class="btn-bronze" onclick="YijingUI.startCast()">摇 卦</button>' +
+      '<button id="shakeBtn" class="btn-ghost" onclick="YijingUI.enableShake()">开启摇一摇</button>' +
+      '<p id="shakeHint" class="hint" style="display:none">摇动手机即可起卦</p>' +
       '</div></div>' +
       lampHTML();
   }
@@ -84,8 +86,8 @@
     }
     // 两按钮
     h += '<div class="tab2">' +
-      '<button class="' + (S.expanded === 'trans' ? 'on' : '') + '" onclick="YijingUI.toggle(\'trans\')">现代汉语翻译</button>' +
-      '<button class="' + (S.expanded === 'app' ? 'on' : '') + '" onclick="YijingUI.toggle(\'app\')">现代社会应用</button>' +
+      '<button class="' + (S.expanded === 'trans' ? 'on' : '') + '" onclick="YijingUI.toggle(\'trans\')">今译</button>' +
+      '<button class="' + (S.expanded === 'app' ? 'on' : '') + '" onclick="YijingUI.toggle(\'app\')">今用</button>' +
       '</div><div id="expand"></div>';
     h += '<button class="btn-bronze" onclick="YijingUI.goCast()">再摇一卦</button>';
     h += '</div></div>' + lampHTML();
@@ -110,7 +112,7 @@
       });
       h += '</div>';
     } else if (S.expanded === 'app') {
-      h = '<div class="expand"><section class="sec"><h4>现代社会应用</h4><div class="modern">' +
+      h = '<div class="expand"><section class="sec"><h4>今用</h4><div class="modern">' +
         esc(r.hex.meaning).replace(/\n/g, '<br>') + '</div></section></div>';
     }
     el.innerHTML = h;
@@ -122,9 +124,62 @@
     return '<div class="lamp" aria-hidden="true">' +
       '<div class="lamp-glow"></div>' +
       '<div class="lamp-flame"><i></i></div>' +
+      '<div class="lamp-smoke"><i></i><i></i><i></i></div>' +
       '<div class="lamp-body"></div>' +
       '<div class="lamp-base"></div>' +
       '</div>';
+  }
+
+  /* ---------- 铜钱声效（Web Audio 合成） ---------- */
+  var AC = null;
+  function ac() {
+    if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) {} }
+    if (AC && AC.state === 'suspended') AC.resume();
+    return AC;
+  }
+  function coinClick(delay, vol) {
+    var ctx = ac(); if (!ctx) return;
+    var t = ctx.currentTime + delay;
+    // 金属碰击：高频振荡 + 快速衰减
+    [5230, 7450, 9320].forEach(function (f, i) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'triangle'; o.frequency.value = f * (0.98 + Math.random() * 0.04);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vol / (i + 1), t + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.12 + Math.random() * 0.08);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(t); o.stop(t + 0.25);
+    });
+  }
+  function playRattle() {
+    // 一串铜钱碰击声
+    for (var i = 0; i < 9; i++) {
+      coinClick(i * 0.09 + Math.random() * 0.03, 0.16);
+    }
+  }
+
+  /* ---------- 摇一摇感应 ---------- */
+  var shakeOn = false, lastA = null, lastT = 0, shakeCount = 0;
+  function onMotion(e) {
+    if (!shakeOn || S.casting || S.page !== 'cast') return;
+    var a = e.accelerationIncludingGravity;
+    if (!a) return;
+    var now = Date.now();
+    if (now - lastT < 120) return;
+    lastT = now;
+    if (lastA) {
+      var dx = a.x - lastA.x, dy = a.y - lastA.y, dz = a.z - lastA.z;
+      var mag = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      if (mag > 22) { // 摇动阈值
+        shakeCount++;
+        playRattle();
+        if (shakeCount >= 2) { // 连续摇两次触发
+          shakeCount = 0;
+          window.YijingUI.startCast();
+        }
+      }
+    }
+    lastA = { x: a.x, y: a.y, z: a.z };
   }
 
   /* ---------- 对外 ---------- */
@@ -132,9 +187,26 @@
     goHome: showHome,
     goCast: function () { S.result = null; S.expanded = null; showCast(); },
     toggle: function (w) { S.expanded = (S.expanded === w) ? null : w; showResult(); },
+    enableShake: function () {
+      function on() {
+        shakeOn = true;
+        var b = $('shakeBtn'); if (b) b.style.display = 'none';
+        var h = $('shakeHint'); if (h) h.style.display = '';
+        try { window.addEventListener('devicemotion', onMotion); } catch (_) {}
+      }
+      // iOS 13+ 需用户手势授权
+      if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+        DeviceMotionEvent.requestPermission().then(function (r) {
+          if (r === 'granted') on();
+        }).catch(function () {});
+      } else {
+        on();
+      }
+    },
     startCast: function () {
       if (S.casting) return;
       S.casting = true;
+      playRattle();
       var btn = $('castBtn'), area = $('castArea');
       if (btn) btn.disabled = true;
       if (area) area.innerHTML = '';
