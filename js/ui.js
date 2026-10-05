@@ -163,7 +163,15 @@
   }
 
   /* ---------- 摇一摇感应 ---------- */
-  var shakeOn = false, lastA = null, lastT = 0, shakeCount = 0;
+  var shakeOn = false, lastA = null, lastT = 0, shakeCount = 0, lastSnd = 0;
+  // 摇动中发声：只要有明显晃动就响一声铜钱
+  function shakeSound(mag) {
+    var now = Date.now();
+    if (mag > 10 && now - lastSnd > 180) {
+      lastSnd = now;
+      coinClick(0, 0.14);
+    }
+  }
   function onMotion(e) {
     if (!shakeOn || S.casting) return;
     if (S.page === 'result') { // 结果页摇一摇 → 自动再摇
@@ -174,7 +182,9 @@
       lastT = now0;
       if (lastA) {
         var dx = a0.x - lastA.x, dy = a0.y - lastA.y, dz = a0.z - lastA.z;
-        if (Math.sqrt(dx*dx + dy*dy + dz*dz) > 22) {
+        var mg0 = Math.sqrt(dx*dx + dy*dy + dz*dz);
+        shakeSound(mg0);
+        if (mg0 > 22) {
           lastA = null; shakeCount = 0;
           playRattle();
           window.YijingUI.goCast();
@@ -194,6 +204,7 @@
     if (lastA) {
       var dx = a.x - lastA.x, dy = a.y - lastA.y, dz = a.z - lastA.z;
       var mag = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      shakeSound(mag);
       if (mag > 22) { // 摇动阈值
         shakeCount++;
         playRattle();
@@ -263,6 +274,7 @@
         }
         var L = C.castOneLine();
         lines.push(L);
+        coinClick(0, 0.12);
         if (area) {
           var d = document.createElement('div');
           d.className = 'cast-line' + (L.moving ? ' mv' : '');
