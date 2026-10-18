@@ -27,7 +27,7 @@ body{
 .scroll-wrap::-webkit-scrollbar-thumb{background:rgba(138,109,59,.45);border-radius:3px}
 
 .book{
-  position:relative;max-width:380px;margin:0 auto;padding:38px 30px 34px;
+  position:relative;max-width:380px;margin:0 auto;padding:24px 22px 22px;
   background:
     /* 岁月斑驳 */
     radial-gradient(ellipse 30% 20% at 12% 8%, rgba(120,90,40,.14), transparent 70%),
@@ -59,39 +59,44 @@ body{
   color:#f2e8d0;line-height:1.3;background:linear-gradient(145deg,#a83a26,#7e2418);
   border-radius:5px;transform:rotate(-4deg);
   box-shadow:0 0 0 2px rgba(140,40,25,.4),0 6px 16px rgba(0,0,0,.35),inset 0 0 16px rgba(0,0,0,.4)}
-.seal-row{display:flex;justify-content:center;margin:4px 0 2px}
+.seal-row{display:flex;justify-content:center;margin:2px 0}
 .seal{display:flex;flex-direction:column;align-items:center;justify-content:center;
-  width:62px;height:62px;font-family:"ChongXiSeal",serif;font-size:25px;
+  width:52px;height:52px;font-family:"ChongXiSeal",serif;font-size:21px;
   color:#f2e8d0;line-height:1.3;background:linear-gradient(145deg,#a83a26,#7e2418);
   border-radius:4px;transform:rotate(-3deg);
   box-shadow:0 0 0 2px rgba(140,40,25,.4),0 4px 12px rgba(0,0,0,.3),inset 0 0 12px rgba(0,0,0,.4)}
 
 /* 卦题 */
-.hex-title{text-align:center;font-size:24px;letter-spacing:4px;margin:10px 0 4px}
-.hex-qian{font-size:13px;color:var(--gold);letter-spacing:2px}
+.hex-title{text-align:center;font-size:22px;letter-spacing:4px;margin:6px 0 2px}
+.hex-qian{font-size:12px;color:var(--gold);letter-spacing:2px}
 
 /* 卦象 */
-.yj-diagram{margin:14px 0;text-align:center}
-.yj-dline{font-size:22px;letter-spacing:8px;line-height:2.1;color:var(--ink)}
+.yj-diagram{margin:8px 0;text-align:center}
+.yj-dline{font-size:19px;letter-spacing:6px;line-height:1.75;color:var(--ink)}
 .yj-dline.moving{color:var(--cinnabar)}
 .yj-dline em{font-style:normal;font-size:11px;border:1px solid var(--cinnabar);
   border-radius:3px;padding:1px 5px;margin-left:8px;vertical-align:3px;letter-spacing:0}
-.rule{text-align:center;font-size:13px;color:var(--gold);margin:8px 0 18px;letter-spacing:2px}
+.rule{text-align:center;font-size:12px;color:var(--gold);margin:6px 0 12px;letter-spacing:2px}
 
 /* 章节 */
-.sec{margin:0 0 18px}
-.sec h4{font-size:14px;letter-spacing:5px;color:var(--gold);margin-bottom:8px;
-  border-bottom:1px solid rgba(138,109,59,.35);padding-bottom:6px}
-.classical{font-size:16px;line-height:2;letter-spacing:1px;
-  padding:10px 14px;background:rgba(138,109,59,.08);
+.sec{margin:0 0 12px}
+.sec h4{font-size:13px;letter-spacing:4px;color:var(--gold);margin-bottom:6px;
+  border-bottom:1px solid rgba(138,109,59,.35);padding-bottom:4px}
+.sec.fold h4{cursor:pointer;user-select:none;-webkit-user-select:none}
+.sec.fold .fold-arrow{float:right;transition:transform .2s;font-size:11px}
+.sec.fold .fold-body{display:none}
+.sec.fold.open .fold-body{display:block}
+.sec.fold.open .fold-arrow{transform:rotate(180deg)}
+.classical{font-size:15px;line-height:1.8;letter-spacing:1px;
+  padding:8px 12px;background:rgba(138,109,59,.08);
   border-left:2px solid var(--gold)}
 .modern{font-size:14px;line-height:1.95;color:#4a3a26;
   padding:10px 14px;background:rgba(255,255,255,.25);border-left:2px solid #a89878}
 .info{font-size:14px;color:#4a3a26;line-height:1.8}
 
 /* 双按钮 */
-.tab2{display:flex;gap:12px;margin:20px 0 4px}
-.tab2 button{flex:1;padding:12px 0;font-size:15px;letter-spacing:3px;cursor:pointer;
+.tab2{display:flex;gap:10px;margin:12px 0 4px}
+.tab2 button{flex:1;padding:10px 0;font-size:14px;letter-spacing:3px;cursor:pointer;
   font-family:inherit;color:var(--bronze);background:rgba(138,109,59,.1);
   border:1px solid rgba(138,109,59,.5);border-radius:6px}
 .tab2 button.on{color:#f2e8d0;background:linear-gradient(180deg,#7a5c30,#5e451f);
@@ -100,7 +105,7 @@ body{
 @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
 /* 按钮 */
-.btn-bronze{display:block;margin:22px auto 0;padding:13px 52px;font-size:17px;letter-spacing:8px;
+.btn-bronze{display:block;margin:14px auto 0;padding:11px 48px;font-size:16px;letter-spacing:8px;
   text-indent:8px;font-family:inherit;cursor:pointer;color:#f2e8d0;
   background:linear-gradient(180deg,#7a5c30,#54401e);border:1px solid #8a6d3b;border-radius:8px;
   box-shadow:0 4px 14px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.15)}
