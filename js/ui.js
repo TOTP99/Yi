@@ -77,9 +77,15 @@
     h += '<div class="hex-title">' + esc(sn) + ' <span class="hex-qian">' + esc(hex.qian) + '</span></div>';
     h += hexDiagram(S.lines);
     h += '<div class="rule">断法 · ' + esc(r.rule) + '</div>';
-    // 原文
-    r.parts.forEach(function (p) {
-      h += '<section class="sec"><h4>' + esc(p.t) + '</h4><p class="classical">' + esc(p.classical) + '</p></section>';
+    // 原文：卦辞常显，爻辞折叠（主次分明）
+    r.parts.forEach(function (p, idx) {
+      if (idx === 0) {
+        h += '<section class="sec"><h4>' + esc(p.t) + '</h4><p class="classical">' + esc(p.classical) + '</p></section>';
+      } else {
+        h += '<section class="sec fold' + (idx === 1 ? ' open' : '') + '">' +
+          '<h4 onclick="YijingUI.fold(this)">' + esc(p.t) + '<span class="fold-arrow">▾</span></h4>' +
+          '<div class="fold-body"><p class="classical">' + esc(p.classical) + '</p></div></section>';
+      }
     });
     if (r.moving.length) {
       h += '<section class="sec"><h4>动爻</h4><p class="info">' +
@@ -111,8 +117,14 @@
     var r = S.result, h = '';
     if (S.expanded === 'trans') {
       h = '<div class="expand">';
-      r.parts.forEach(function (p) {
-        h += '<section class="sec"><h4>' + esc(p.t) + ' · 译</h4><p class="modern">' + esc(p.modern || '—') + '</p></section>';
+      r.parts.forEach(function (p, idx) {
+        if (idx === 0) {
+          h += '<section class="sec"><h4>' + esc(p.t) + ' · 译</h4><p class="modern">' + esc(p.modern || '—') + '</p></section>';
+        } else {
+          h += '<section class="sec fold' + (idx === 1 ? ' open' : '') + '">' +
+            '<h4 onclick="YijingUI.fold(this)">' + esc(p.t) + ' · 译<span class="fold-arrow">▾</span></h4>' +
+            '<div class="fold-body"><p class="modern">' + esc(p.modern || '—') + '</p></div></section>';
+        }
       });
       h += '</div>';
     } else if (S.expanded === 'app') {
@@ -222,6 +234,10 @@
     goHome: showHome,
     goCast: function () { S.result = null; S.expanded = null; showCast(); },
     toggle: function (w) { S.expanded = (S.expanded === w) ? null : w; showResult(); },
+    fold: function (el) {
+      var sec = el.parentNode;
+      sec.classList.toggle('open');
+    },
     enableShake: function (silent) {
       function on() {
         shakeOn = true;
